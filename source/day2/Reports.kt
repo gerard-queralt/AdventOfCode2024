@@ -36,6 +36,33 @@ fun main() {
         }
     }
     println("Part 2 (brute force): $safeReportsPart2BruteForce")
+
+    // Let's debug the honest attempt
+    val honestAttemptRes = input.useLines {
+        it.filter { report ->
+            isReportSafeWithDampener(rawReportToList(report))
+        }.toList()
+    }
+    val bruteForceRes = input.useLines {
+        it.filter { report ->
+            val reportAsList = rawReportToList(report)
+
+            if (isReportSafe(reportAsList)) {
+                return@filter true
+            }
+            reportAsList.forEachIndexed { i, _ ->
+                if (isReportSafe(reportAsList.filterIndexed { j, _ -> i != j })) {
+                    return@filter true
+                }
+            }
+            false
+        }.toList()
+    }
+    // Diff
+    val onlyInHonest = honestAttemptRes.filter { it !in bruteForceRes }
+    val onlyInBruteForce = bruteForceRes.filter { it !in honestAttemptRes }
+    println("Only in honest: $onlyInHonest")
+    println("Only in bruteForce: $onlyInBruteForce")
 }
 
 fun isPairSafe(i_leftValue: Int, i_rightValue: Int, i_increasing: Boolean): Boolean {
@@ -68,6 +95,9 @@ fun isReportSafe(i_report: List<Int>): Boolean {
     }
 }
 
+// I figured that the cases where this method is wrong is when eliminating the first element fixes the list
+// but the first pair of elements is safe
+// honestly, since the brute force approach works, I won't bother fixing it ¯\_(ツ)_/¯
 fun isReportSafeWithDampener(i_report: List<Int>): Boolean {
     var increasing: Boolean? = null
     var dampenedError = false
@@ -101,7 +131,7 @@ fun isReportSafeWithDampener(i_report: List<Int>): Boolean {
             // return already, nothing to do
             return true
         }
-        if (!isPairSafe(current, i_report[i + 2], increasing!!)) {
+        if (!isPairSafe(previous, i_report[i + 2], increasing!!)) {
             // couldn't dampen error
             return false
         }
