@@ -63,6 +63,60 @@ public class WordSearch
         return true;
     }
 
+    static bool IsValidCrossMas(List<List<char>> i_matrix, int i_rowIndex, int i_columnIndex)
+    {
+        if (i_matrix[i_rowIndex][i_columnIndex] != 'A')
+        {
+            return false;
+        }
+
+        Direction[] diagonalLeft = { Direction.UpLeft, Direction.DownRight };
+        Direction[] diagonalRight = { Direction.UpRight, Direction.DownLeft };
+        Direction[][] diagonals = { diagonalLeft, diagonalRight };
+
+        foreach (Direction[] diagonal in diagonals)
+        {
+            List<char> valuesToFind = new() { 'M', 'S' };
+            foreach (Direction direction in diagonal)
+            {
+                (int, int) nextIndexes = AdvanceInDirection(direction, i_rowIndex, i_columnIndex);
+                int rowIndex = nextIndexes.Item1;
+                int columnIndex = nextIndexes.Item2;
+                if (!IsIndexValid(i_matrix, rowIndex, columnIndex))
+                {
+                    return false;
+                }
+                char elementInIndex = i_matrix[rowIndex][columnIndex];
+                if (valuesToFind.Contains(elementInIndex))
+                {
+                    valuesToFind.Remove(elementInIndex);
+                }
+                else
+                {
+                    // Does not form a cross MAS
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    static uint CountCrossMas(List<List<char>> i_matrix)
+    {
+        uint count = 0;
+        for (int i = 0; i < i_matrix.Count; ++i)
+        {
+            for (int j = 0; j < i_matrix[i].Count; ++j)
+            {
+                if (IsValidCrossMas(i_matrix, i, j))
+                {
+                    ++count;
+                }
+            }
+        }
+        return count;
+    }
+
     static uint CountValidXmas(List<List<char>> i_matrix, int i_rowIndex, int i_columnIndex)
     {
         if (i_matrix[i_rowIndex][i_columnIndex] != 'X')
@@ -71,7 +125,7 @@ public class WordSearch
         }
 
         uint count = 0;
-        List<char> expectedSequence = new() { 'M', 'A', 'S' };
+        char[] expectedSequence = { 'M', 'A', 'S' };
 
         foreach (Direction direction in Enum.GetValues(typeof(Direction)))
         {
@@ -102,15 +156,14 @@ public class WordSearch
         return count;
     }
 
-    static uint CountXmas(string i_input)
+    static uint CountXmas(List<List<char>> i_matrix)
     {
-        List<List<char>> matrix = ConvertInputToCharMatrix(i_input);
         uint count = 0;
-        for (int i = 0; i < matrix.Count; ++i)
+        for (int i = 0; i < i_matrix.Count; ++i)
         {
-            for (int j = 0; j < matrix[i].Count; ++j)
+            for (int j = 0; j < i_matrix[i].Count; ++j)
             {
-                count += CountValidXmas(matrix, i, j);
+                count += CountValidXmas(i_matrix, i, j);
             }
         }
         return count;
@@ -119,6 +172,8 @@ public class WordSearch
     static void Main(string[] args)
     {
         string input = CsharpFileReader.ReadInputOfDay(4);
-        Console.WriteLine("Part 1: " + CountXmas(input));
+        List<List<char>> matrix = ConvertInputToCharMatrix(input);
+        Console.WriteLine("Part 1: " + CountXmas(matrix));
+        Console.WriteLine("Part 2: " + CountCrossMas(matrix));
     }
 }
