@@ -1,3 +1,6 @@
+# Make sure to not commit inputs
+input.txt
+
 # Created by https://www.toptal.com/developers/gitignore/api/c++,java,csharp,kotlin,python,haskell,intellij,visualstudio,go,rust
 # Edit at https://www.toptal.com/developers/gitignore?templates=c++,java,csharp,kotlin,python,haskell,intellij,visualstudio,go,rust
 
