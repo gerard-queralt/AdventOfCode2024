@@ -12,6 +12,24 @@ import (
 type OrderingMap = map[int][]int
 type Update = []int
 
+func fixUpdate(i_orderingMap OrderingMap, i_updateToFix Update) Update {
+	for !isUpdateValid(i_orderingMap, i_updateToFix) {
+		for index, page := range i_updateToFix {
+			previousPages := i_updateToFix[:index]
+			for previousPageIndex, previousPage := range previousPages {
+				if slices.Contains(i_orderingMap[page], previousPage) {
+					// one of the pages that must be after was found before!
+					// first, remove it from the slice
+					i_updateToFix = append(i_updateToFix[:previousPageIndex], i_updateToFix[previousPageIndex+1:]...)
+					// then add it after the "page"
+					i_updateToFix = append(i_updateToFix[:index], append([]int{previousPage}, i_updateToFix[index:]...)...)
+				}
+			}
+		}
+	}
+	return i_updateToFix
+}
+
 func sumMiddlePageOfUpdates(i_updates []Update) int {
 	result := 0
 	for _, update := range i_updates {
@@ -20,31 +38,32 @@ func sumMiddlePageOfUpdates(i_updates []Update) int {
 	return result
 }
 
-func findValidUpdates(i_orderingMap OrderingMap, i_updates []Update) []Update {
-	validUpdates := make([]Update, 0)
-
-	for _, update := range i_updates {
-		isValid := true
-		for index, page := range update {
-			previousPages := update[:index]
-			for _, previousPage := range previousPages {
-				if slices.Contains(i_orderingMap[page], previousPage) {
-					// one of the pages that must be after was found before!
-					isValid = false
-					break
-				}
-			}
-			if !isValid {
-				break
+func isUpdateValid(i_orderingMap OrderingMap, i_update Update) bool {
+	for index, page := range i_update {
+		previousPages := i_update[:index]
+		for _, previousPage := range previousPages {
+			if slices.Contains(i_orderingMap[page], previousPage) {
+				// one of the pages that must be after was found before!
+				return false
 			}
 		}
+	}
+	return true
+}
 
-		if isValid {
+func findValidAndInvalidUpdates(i_orderingMap OrderingMap, i_updates []Update) (validUpdates, invalidUpdates []Update) {
+	validUpdates = make([]Update, 0)
+	invalidUpdates = make([]Update, 0)
+
+	for _, update := range i_updates {
+		if isUpdateValid(i_orderingMap, update) {
 			validUpdates = append(validUpdates, update)
+		} else {
+			invalidUpdates = append(invalidUpdates, update)
 		}
 	}
 
-	return validUpdates
+	return validUpdates, invalidUpdates
 }
 
 func createUpdateSlice(i_updatesAsString []string) []Update {
@@ -102,6 +121,13 @@ func processInput(i_input []byte) (OrderingMap, []Update) {
 
 func main() {
 	orderingMap, updateSlice := processInput(filereader.ReadInputOfDay(5))
-	validUpdates := findValidUpdates(orderingMap, updateSlice)
+
+	validUpdates, invalidUpdates := findValidAndInvalidUpdates(orderingMap, updateSlice)
 	fmt.Printf("Part 1: %d\n", sumMiddlePageOfUpdates(validUpdates))
+
+	fixedUpdates := make([]Update, len(invalidUpdates))
+	for i, update := range invalidUpdates {
+		fixedUpdates[i] = fixUpdate(orderingMap, update)
+	}
+	fmt.Printf("Part 2: %d\n", sumMiddlePageOfUpdates(fixedUpdates))
 }
